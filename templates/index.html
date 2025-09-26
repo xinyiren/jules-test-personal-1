@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>OpenAI Chatbot</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: #fce4ec; /* Light pink background */
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #chat-container {
+            width: 80%;
+            max-width: 600px;
+            height: 80vh;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        #chat-history {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 20px;
+            max-width: 80%;
+            line-height: 1.4;
+        }
+        .user-message {
+            background-color: #ffc1e3; /* Pink for user messages */
+            color: #333;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        .bot-message {
+            background-color: #f1f1f1;
+            color: #333;
+            align-self: flex-start;
+        }
+        #chat-form {
+            display: flex;
+            padding: 20px;
+        }
+        #message-input {
+            flex-grow: 1;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+        #send-button {
+            background-color: #e91e63; /* Hot pink button */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        #send-button:hover {
+            background-color: #c2185b; /* Darker pink on hover */
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-history">
+            <div class="message bot-message">Hello! How can I help you today?</div>
+        </div>
+        <form id="chat-form" method="post" action="/chat">
+            <input type="text" id="message-input" name="message" placeholder="Type your message..." autocomplete="off">
+            <button type="submit" id="send-button">Send</button>
+        </form>
+    </div>
+
+    <script>
+        const chatHistory = document.getElementById('chat-history');
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            appendMessage(message, 'user');
+            messageInput.value = '';
+
+            const response = await fetch('/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message })
+            });
+
+            const data = await response.json();
+            appendMessage(data.reply, 'bot');
+        });
+
+        function appendMessage(message, sender) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', `${sender}-message`);
+            messageElement.innerText = message;
+            chatHistory.appendChild(messageElement);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+    </script>
+</body>
+</html>
