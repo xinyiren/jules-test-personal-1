@@ -1,28 +1,30 @@
-from sudoku import generate_board, is_valid, is_solved, print_board
+import os
+from flask import Flask, render_template, request, jsonify
+import openai
 
-def main():
-    """Main function to run the Sudoku game."""
-    board = generate_board()
+app = Flask(__name__)
 
-    while not is_solved(board):
-        print_board(board)
-        try:
-            row = int(input("Enter row (1-9): ")) - 1
-            col = int(input("Enter col (1-9): ")) - 1
-            num = int(input("Enter num (1-9): "))
+# It's better to load the key from environment variables
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-            if 0 <= row < 9 and 0 <= col < 9 and 1 <= num <= 9:
-                if is_valid(board, row, col, num):
-                    board[row][col] = num
-                else:
-                    print("Invalid move. Try again.")
-            else:
-                print("Invalid input. Row, col, and num must be between 1 and 9.")
-        except ValueError:
-            print("Invalid input. Please enter numbers only.")
+@app.route("/")
+def index():
+    return render_template("index.html")
 
-    print("Congratulations! You solved the Sudoku!")
-    print_board(board)
+@app.route("/chat", methods=["POST"])
+def chat():
+    message = request.json["message"]
+    try:
+        response = openai.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": message}]
+        )
+        reply = response.choices[0].message.content
+    except Exception as e:
+        print(f"Error: {e}")
+        reply = "I am sorry, I am having trouble connecting to the service."
+
+    return jsonify({"reply": reply})
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True, port=5001, use_reloader=False)
