@@ -80,6 +80,10 @@
 </head>
 <body>
     <div id="chat-container">
+        <div id="system-prompt-container">
+            <label for="system-prompt">System Prompt:</label>
+            <textarea id="system-prompt" name="system_prompt" rows="3" placeholder="e.g., You are a helpful assistant."></textarea>
+        </div>
         <div id="chat-history">
             <div class="message bot-message">Hello! How can I help you today?</div>
         </div>
@@ -89,14 +93,36 @@
         </form>
     </div>
 
+    <style>
+        #system-prompt-container {
+            padding: 10px 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        #system-prompt-container label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: bold;
+        }
+        #system-prompt {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+    </style>
+
     <script>
         const chatHistory = document.getElementById('chat-history');
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
+        const systemPromptInput = document.getElementById('system-prompt');
 
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const message = messageInput.value.trim();
+            const system_prompt = systemPromptInput.value.trim();
             if (!message) return;
 
             appendMessage(message, 'user');
@@ -107,7 +133,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ message })
+                body: JSON.stringify({ message, system_prompt })
             });
 
             const data = await response.json();
