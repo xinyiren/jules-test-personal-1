@@ -13,11 +13,19 @@ def index():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    message = request.json["message"]
+    data = request.json
+    message = data["message"]
+    system_prompt = data.get("system_prompt", "You are a helpful assistant.")
+
+    messages = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": message})
+
     try:
         response = openai.chat.completions.create(
             model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": message}]
+            messages=messages
         )
         reply = response.choices[0].message.content
     except Exception as e:
