@@ -76,6 +76,25 @@
         #send-button:hover {
             background-color: #c2185b; /* Darker pink on hover */
         }
+        #upload-form {
+            display: flex;
+            padding: 10px 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        #file-input {
+            flex-grow: 1;
+        }
+        #upload-button {
+            background-color: #e91e63; /* Hot pink button */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+        #upload-button:hover {
+            background-color: #c2185b; /* Darker pink on hover */
+        }
     </style>
 </head>
 <body>
@@ -90,6 +109,10 @@
         <form id="chat-form" method="post" action="/chat">
             <input type="text" id="message-input" name="message" placeholder="Type your message..." autocomplete="off">
             <button type="submit" id="send-button">Send</button>
+        </form>
+        <form id="upload-form" enctype="multipart/form-data">
+            <input type="file" id="file-input" name="file">
+            <button type="submit" id="upload-button">Upload</button>
         </form>
     </div>
 
@@ -118,6 +141,8 @@
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
         const systemPromptInput = document.getElementById('system-prompt');
+        const uploadForm = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
 
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -138,6 +163,27 @@
 
             const data = await response.json();
             appendMessage(data.reply, 'bot');
+        });
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            if (!file) {
+                appendMessage('Please select a file to upload.', 'bot');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+            appendMessage(data.message, 'bot');
+            fileInput.value = '';
         });
 
         function appendMessage(message, sender) {

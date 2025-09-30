@@ -1,2 +1,11 @@
 Flask
 openai
+langchain
+pypdf
+faiss-cpu
+tiktoken
+pytest
+requests
+fpdf
+langchain-community
+langchain-openai
