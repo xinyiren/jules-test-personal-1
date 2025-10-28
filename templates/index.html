@@ -53,6 +53,12 @@
             background-color: #f1f1f1;
             color: #333;
             align-self: flex-start;
+            margin: 5px;
+        }
+        .bot-message-container {
+            display: flex;
+            justify-content: flex-start;
+            width: 100%;
         }
         #chat-form {
             display: flex;
@@ -137,8 +143,26 @@
             });
 
             const data = await response.json();
-            appendMessage(data.reply, 'bot');
+            appendBotMessages(data.reply1, data.reply2);
         });
+
+        function appendBotMessages(reply1, reply2) {
+            const container = document.createElement('div');
+            container.classList.add('bot-message-container');
+
+            const message1 = document.createElement('div');
+            message1.classList.add('message', 'bot-message');
+            message1.innerText = reply1;
+
+            const message2 = document.createElement('div');
+            message2.classList.add('message', 'bot-message');
+            message2.innerText = reply2;
+
+            container.appendChild(message1);
+            container.appendChild(message2);
+            chatHistory.appendChild(container);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
 
         function appendMessage(message, sender) {
             const messageElement = document.createElement('div');
