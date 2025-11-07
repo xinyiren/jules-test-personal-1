@@ -1,0 +1,10 @@
+# Caches and logs
+__pycache__/
+*.log
+
+# Temporary verification files
+jules-scratch/
+
+# Uploaded documents and generated indexes
+uploads/
+faiss_index/

@@ -76,6 +76,10 @@
         #send-button:hover {
             background-color: #c2185b; /* Darker pink on hover */
         }
+        #upload-container {
+            padding: 10px 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
     </style>
 </head>
 <body>
@@ -83,6 +87,14 @@
         <div id="system-prompt-container">
             <label for="system-prompt">System Prompt:</label>
             <textarea id="system-prompt" name="system_prompt" rows="3" placeholder="e.g., You are a helpful assistant."></textarea>
+        </div>
+        <div id="upload-container">
+            <form id="upload-form" enctype="multipart/form-data">
+                <input type="file" id="file-input" name="file" accept=".pdf">
+                <button type="submit" id="upload-button">Upload</button>
+            </form>
+            <button id="clear-button">Clear Context</button>
+            <div id="upload-status"></div>
         </div>
         <div id="chat-history">
             <div class="message bot-message">Hello! How can I help you today?</div>
@@ -118,6 +130,57 @@
         const chatForm = document.getElementById('chat-form');
         const messageInput = document.getElementById('message-input');
         const systemPromptInput = document.getElementById('system-prompt');
+        const uploadForm = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const uploadStatus = document.getElementById('upload-status');
+        const clearButton = document.getElementById('clear-button');
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            if (!file) {
+                uploadStatus.innerText = 'Please select a file to upload.';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            uploadStatus.innerText = 'Uploading...';
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    uploadStatus.innerText = data.success;
+                } else {
+                    uploadStatus.innerText = `Error: ${data.error}`;
+                }
+            } catch (error) {
+                uploadStatus.innerText = 'An error occurred during upload.';
+                console.error('Upload error:', error);
+            }
+        });
+
+        clearButton.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/clear', {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                if(response.ok) {
+                    uploadStatus.innerText = data.success;
+                } else {
+                    uploadStatus.innerText = `Error: ${data.error}`;
+                }
+            } catch (error) {
+                uploadStatus.innerText = 'An error occurred while clearing context.';
+                console.error('Clear error:', error);
+            }
+        });
 
         chatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
