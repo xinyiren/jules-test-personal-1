@@ -1,14 +1,19 @@
 import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.chains import create_retrieval_chain
 from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import AIMessage, HumanMessage
 
 app = Flask(__name__)
+
+# Set a secret key for session management
+# In a production application, this should be a complex, securely stored value
+app.config['SECRET_KEY'] = 'super-secret-key-for-dev'
 
 # Ensure OPENAI_API_KEY is set
 if not os.getenv("OPENAI_API_KEY"):
@@ -68,6 +73,10 @@ def chat():
     message = data["message"]
     system_prompt_text = data.get("system_prompt", "You are a helpful assistant.")
 
+    # Initialize chat history in session if it doesn't exist
+    if 'chat_history' not in session:
+        session['chat_history'] = []
+
     try:
         llm = ChatOpenAI(model="gpt-3.5-turbo")
 
@@ -85,6 +94,7 @@ def chat():
             prompt = ChatPromptTemplate.from_messages(
                 [
                     ("system", system_prompt),
+                    MessagesPlaceholder(variable_name="chat_history"),
                     ("human", "{input}"),
                 ]
             )
@@ -92,17 +102,27 @@ def chat():
             question_answer_chain = create_stuff_documents_chain(llm, prompt)
             rag_chain = create_retrieval_chain(retriever, question_answer_chain)
 
-            response = rag_chain.invoke({"input": message})
+            # Convert session chat history to AIMessage and HumanMessage objects
+            chat_history_messages = []
+            for role, content in session.get('chat_history', []):
+                if role == 'human':
+                    chat_history_messages.append(HumanMessage(content=content))
+                elif role == 'ai':
+                    chat_history_messages.append(AIMessage(content=content))
+
+            response = rag_chain.invoke({"input": message, "chat_history": chat_history_messages})
             reply = response["answer"]
 
         else:
             # Fallback to normal chat if no documents uploaded
-            messages = [
-                ("system", system_prompt_text),
-                ("human", message),
-            ]
+            messages = [("system", system_prompt_text)] + session['chat_history'] + [("human", message)]
             response = llm.invoke(messages)
             reply = response.content
+
+        # Update chat history
+        session['chat_history'].append(("human", message))
+        session['chat_history'].append(("ai", reply))
+        session.modified = True # Ensure the session is saved
 
         return jsonify({"reply": reply})
     except Exception as e:
