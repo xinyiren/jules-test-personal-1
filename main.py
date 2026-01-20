@@ -21,6 +21,14 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Global variable to store the vector store
 vector_store = None
 
+def load_system_prompt():
+    try:
+        with open("prompts/system_prompts.md", "r") as f:
+            return f.read()
+    except Exception as e:
+        print(f"Error reading system prompt: {e}")
+        return "You are a helpful assistant."
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -66,7 +74,9 @@ def chat():
     global vector_store
     data = request.json
     message = data["message"]
-    system_prompt_text = data.get("system_prompt", "You are a helpful assistant.")
+    system_prompt_text = data.get("system_prompt")
+    if not system_prompt_text:
+        system_prompt_text = load_system_prompt()
 
     try:
         llm = ChatOpenAI(model="gpt-3.5-turbo")
